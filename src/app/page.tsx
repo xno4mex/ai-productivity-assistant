@@ -16,6 +16,13 @@ export default function Home() {
 
   const fetchTasks = async () => {
     try {
+      // Проверяем, настроены ли переменные окружения
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co') {
+        console.log('Supabase не настроен, используем локальные данные')
+        setTasks([])
+        return
+      }
+
       const { data, error } = await supabase
         .from('tasks')
         .select('*')
@@ -25,6 +32,7 @@ export default function Home() {
       setTasks(data || [])
     } catch (error) {
       console.error('Ошибка загрузки задач:', error)
+      setTasks([])
     }
   }
 
@@ -33,6 +41,23 @@ export default function Home() {
 
     setLoading(true)
     try {
+      // Проверяем, настроены ли переменные окружения
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co') {
+        // Режим без базы данных - добавляем задачу локально
+        const mockTask = {
+          id: Date.now().toString(),
+          title: newTask,
+          completed: false,
+          priority: 'medium' as const,
+          created_at: new Date().toISOString(),
+          user_id: 'demo-user'
+        }
+        setTasks([mockTask, ...tasks])
+        setNewTask('')
+        setAiSuggestion('🤖 ИИ-анализ недоступен без настройки OpenAI API')
+        return
+      }
+
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
@@ -66,6 +91,15 @@ export default function Home() {
 
   const toggleTask = async (id: string, completed: boolean) => {
     try {
+      // Проверяем, настроены ли переменные окружения
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co') {
+        // Режим без базы данных - обновляем локально
+        setTasks(tasks.map(task => 
+          task.id === id ? { ...task, completed: !completed } : task
+        ))
+        return
+      }
+
       const { error } = await supabase
         .from('tasks')
         .update({ completed: !completed })
@@ -87,6 +121,20 @@ export default function Home() {
         <h1 className="text-4xl font-bold text-gray-800 mb-8 text-center">
           🤖 ИИ-ассистент продуктивности
         </h1>
+
+        {(!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://placeholder.supabase.co') && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <span className="text-yellow-600 mr-2">⚠️</span>
+              <div>
+                <h3 className="font-semibold text-yellow-800">Демо-режим</h3>
+                <p className="text-yellow-700 text-sm">
+                  Для полной функциональности настройте Supabase и OpenAI API в Vercel.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
           <div className="flex gap-4 mb-4">
