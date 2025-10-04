@@ -1,10 +1,14 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-})
+}) : null
 
 export async function analyzeTask(task: string, context: string) {
+  if (!openai) {
+    return '🤖 ИИ-анализ недоступен без настройки OpenAI API ключа'
+  }
+
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
     messages: [
@@ -25,6 +29,10 @@ export async function analyzeTask(task: string, context: string) {
 }
 
 export async function generateProductivityTips(userData: any) {
+  if (!openai) {
+    return '🤖 ИИ-советы недоступны без настройки OpenAI API ключа'
+  }
+
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
     messages: [
@@ -45,6 +53,10 @@ export async function generateProductivityTips(userData: any) {
 }
 
 export async function suggestHabits(userGoals: string[]) {
+  if (!openai) {
+    return '🤖 ИИ-рекомендации привычек недоступны без настройки OpenAI API ключа'
+  }
+
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
     messages: [
